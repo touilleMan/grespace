@@ -327,6 +327,25 @@ class MarsExplorer {
         this.stopStatic();
     }
 
+    playVideo(videoPath) {
+        const video = document.getElementById('mars-video');
+        const source = video.querySelector('source');
+        
+        // Update video source
+        source.src = videoPath;
+        video.load(); // Reload video with new source
+        
+        // Hide no signal effect
+        this.hideNoSignal();
+        
+        // Play the video
+        video.play().catch(error => {
+            console.error('Error playing video:', error);
+            // If video fails to play, show no signal
+            this.showNoSignal();
+        });
+    }
+
     toggleFlashlight() {
         this.flashlightActive = !this.flashlightActive;
         const flashlightEffect = document.getElementById('flashlight-effect');
@@ -378,6 +397,7 @@ All systems nominal`;
     }
 
     scanArea() {
+        this.playVideo("rushes/waiting.mp4");
         const discoveries = [
             'Iron oxide deposits detected 50m north',
             'Unusual rock formation identified',
