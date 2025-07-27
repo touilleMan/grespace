@@ -18,7 +18,7 @@ class MarsExplorer {
             discovered: []
         };
         this.consolePageInitialized = false;
-        this.flashlightActive = false;
+        this.ledActive = false;
         this.missionStartTime = new Date('2025-01-01T00:00:00Z');
         this.missionDuration = {
             days: 149,
@@ -95,8 +95,8 @@ class MarsExplorer {
             this.openModal();
         });
 
-        document.getElementById('toggle-flashlight').addEventListener('click', () => {
-            this.toggleFlashlight();
+        document.getElementById('toggle-led').addEventListener('click', () => {
+            this.toggleLed();
         });
 
         // Control page
@@ -162,11 +162,12 @@ class MarsExplorer {
         await sleep(500);
         await this.addToConsole('Ready for commands. Use command buttons for operations.', 'prompt');
         this.createNextPrompt(); // Show initial prompt
-        this.commands['help'] = () => this.showHelp();
+        this.commands['HELP'] = () => this.showHelp();
         this.generateCommandButtons();
     }
     
     generateCommandButtons() {
+        console.log('Generating command buttons...', this.commands);
         const container = document.getElementById('command-buttons');
         if (!container) return;
         
@@ -206,16 +207,16 @@ class MarsExplorer {
     async showHelp() {
         // At first only the help command is available, using it unlocks more commands
         var needRefreshCommandButtons = false;
-        if (this.commands['log'] == undefined) {
-            this.commands['log'] = () => this.showLog();
+        if (this.commands['LOG'] == undefined) {
+            this.commands['LOG'] = () => this.showLog();
             needRefreshCommandButtons = true;
         }
-        if (this.commands['clear'] == undefined) {
-            this.commands['clear'] = () => this.clearConsole();
+        if (this.commands['CLEAR'] == undefined) {
+            this.commands['CLEAR'] = () => this.clearConsole();
             needRefreshCommandButtons = true;
         }
-        if (this.commands['scan'] == undefined) {
-            this.commands['scan'] = () => this.scanArea();
+        if (this.commands['SCAN'] == undefined) {
+            this.commands['SCAN'] = () => this.scanArea();
             needRefreshCommandButtons = true;
         }
         if (needRefreshCommandButtons) {
@@ -409,14 +410,14 @@ class MarsExplorer {
         });
     }
 
-    toggleFlashlight() {
-        this.flashlightActive = !this.flashlightActive;
-        const flashlightEffect = document.getElementById('flashlight-effect');
+    toggleLed() {
+        this.ledActive = !this.ledActive;
+        const ledEffect = document.getElementById('led-effect');
         
-        if (this.flashlightActive) {
-            flashlightEffect.classList.add('active');
+        if (this.ledActive) {
+            ledEffect.classList.add('active');
         } else {
-            flashlightEffect.classList.remove('active');
+            ledEffect.classList.remove('active');
         }
     }
 
@@ -483,14 +484,13 @@ class MarsExplorer {
         });
     }
 
-    async processCommand(command) {
+    async processCommand(cmd) {
+        console.log(`Processing command: ${cmd}`);
         this.disableCommandButtons();
         let displayPromptText = true;
         try {
             // Complete the current prompt with the command
-            await this.completeCurrentPrompt(command.toUpperCase());
-            
-            const cmd = command.toLowerCase();
+            await this.completeCurrentPrompt(cmd);
             
             console.log(`Processing command: ${cmd}`, this.commands[cmd]);
             console.log(this.commands);
@@ -501,9 +501,7 @@ class MarsExplorer {
                     displayPromptText = false;
                 }
             } else {
-                // Error messages with faster typing
-                await this.addToConsole(`Command not recognized: ${command}`, 'error', CONSOLE_OUTPUT_SPEED);
-                await this.addToConsole('Use the command buttons for available operations', 'warning', CONSOLE_OUTPUT_SPEED);
+                throw new Error(`Command not recognized: ${cmd}, available commands: ${Object.keys(this.commands).join(', ')}`);
             }
 
         } finally {
@@ -548,7 +546,7 @@ All systems nominal`;
         await this.addToConsole("CONNECT TO SIGNAL ?", 'error');
         const previousCommands = this.commands;
         this.commands = {
-            'yes': async () => {
+            'YES': async () => {
                 const connecting = "CONNECTING";
                 const connecting_and_dots = `${connecting}..........`;
                 let connecting_line = await this.addToConsole(connecting, 'warning');
@@ -556,9 +554,11 @@ All systems nominal`;
                 await this.typeText(connecting_line, connecting_and_dots + " DONE!", CONSOLE_OUTPUT_SPEED, connecting_and_dots.length);
                 this.playVideo("rushes/waiting.mp4");
                 this.commands = previousCommands; // Restore commands
+                delete this.commands['SCAN'];  // No longer used
+                this.commands['LED'] = () => this.toggleLed();
                 this.generateCommandButtons();
             },
-            'no': () => {
+            'NO': () => {
                 this.commands = previousCommands; // Restore commands
                 this.generateCommandButtons();
             }
