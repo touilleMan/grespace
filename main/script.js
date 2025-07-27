@@ -18,17 +18,17 @@ class MarsExplorer {
             seconds: 17
         };
         this.commands = {
-            'help': 'Available commands: status, scan, drill, sample, weather, navigate, power, comms, log, clear',
-            'status': () => this.getStatus(),
-            'scan': () => this.scanArea(),
-            'drill': () => this.drillSample(),
-            'sample': () => this.analyzeSample(),
-            'weather': () => this.getWeather(),
-            'navigate': () => this.navigate(),
-            'power': () => this.checkPower(),
-            'comms': () => this.communications(),
-            'log': () => this.showLog(),
-            'clear': () => this.clearConsole()
+            'help': () => this.showHelp(),
+            // 'status': () => this.getStatus(),
+            // 'scan': () => this.scanArea(),
+            // 'drill': () => this.drillSample(),
+            // 'sample': () => this.analyzeSample(),
+            // 'weather': () => this.getWeather(),
+            // 'navigate': () => this.navigate(),
+            // 'power': () => this.checkPower(),
+            // 'comms': () => this.communications(),
+            // 'log': () => this.showLog(),
+            // 'clear': () => this.clearConsole()
         };
         this.init();
     }
@@ -36,6 +36,7 @@ class MarsExplorer {
     init() {
         this.bindEvents();
         this.setupConsole();
+        this.generateCommandButtons();
         this.startTimers();
         this.setupVideoEffects();
     }
@@ -116,13 +117,7 @@ class MarsExplorer {
             }
         });
 
-        // Command buttons
-        document.querySelectorAll('.command-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const command = btn.getAttribute('data-command');
-                this.processCommand(command);
-            });
-        });
+        // Command buttons will be bound dynamically
 
         // Company links
         document.getElementById('company-website').addEventListener('click', (e) => {
@@ -161,6 +156,61 @@ class MarsExplorer {
     setupConsole() {
         const output = document.getElementById('console-output');
         this.addToConsole('Ready for commands. Click a command button to begin.', 'prompt');
+    }
+    
+    generateCommandButtons() {
+        const container = document.getElementById('command-buttons');
+        if (!container) return;
+        
+        // Clear existing buttons
+        container.innerHTML = '';
+        
+        // Generate buttons from commands object
+        Object.keys(this.commands).forEach(command => {
+            const button = document.createElement('button');
+            button.className = 'command-btn';
+            button.setAttribute('data-command', command);
+            button.textContent = command.toUpperCase();
+            
+            // Add click event listener
+            button.addEventListener('click', () => {
+                this.processCommand(command);
+            });
+            
+            container.appendChild(button);
+        });
+    }
+    
+    showHelp() {
+        var needRefreshCommandButtons = false;
+        if (this.commands['log'] == undefined) {
+            this.commands['log'] = () => this.showLog();
+            needRefreshCommandButtons = true;
+        }
+        if (this.commands['clear'] == undefined) {
+            this.commands['clear'] = () => this.clearConsole();
+            needRefreshCommandButtons = true;
+        }
+        if (this.commands['scan'] == undefined) {
+            this.commands['scan'] = () => this.scanArea();
+            needRefreshCommandButtons = true;
+        }
+        if (needRefreshCommandButtons) {
+            this.generateCommandButtons();
+        }
+
+            // 'status': () => this.getStatus(),
+            // 'drill': () => this.drillSample(),
+            // 'sample': () => this.analyzeSample(),
+            // 'weather': () => this.getWeather(),
+            // 'navigate': () => this.navigate(),
+            // 'power': () => this.checkPower(),
+            // 'comms': () => this.communications(),
+
+
+        const availableCommands = Object.keys(this.commands).join(', ');
+        this.addToConsole(`Available commands: ${availableCommands}`, 'success');
+        return null;
     }
 
     setupVideoEffects() {
