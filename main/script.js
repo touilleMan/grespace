@@ -1,5 +1,5 @@
 const CONSOLE_TYPING_SPEED = 80;
-const CONSOLE_OUTPUT_SPEED = 20;
+const CONSOLE_OUTPUT_SPEED = 15;
 
 // Mars Explorer Interactive System
 class MarsExplorer {
@@ -177,8 +177,8 @@ class MarsExplorer {
             button.textContent = command.toUpperCase();
             
             // Add click event listener
-            button.addEventListener('click', () => {
-                this.processCommand(command);
+            button.addEventListener('click', async () => {
+                await this.processCommand(command);
             });
             
             container.appendChild(button);
@@ -401,17 +401,17 @@ class MarsExplorer {
         }
     }
 
-    addToConsole(text, type = 'normal', speed = CONSOLE_OUTPUT_SPEED, callback = null) {
+    async addToConsole(text, type = 'normal', speed = CONSOLE_OUTPUT_SPEED) {
         const output = document.getElementById('console-output');
         const line = document.createElement('div');
         line.className = `output-line ${type}`;
         output.appendChild(line);
         
-        // Start typing animation
-        this.typeText(line, text, speed, () => {
-            output.scrollTop = output.scrollHeight;
-            if (callback) callback();
-        });
+        // Start typing animation and wait for completion
+        await this.typeText(line, text, speed);
+        output.scrollTop = output.scrollHeight;
+
+        return line;
     }
     
     showPrompt() {
@@ -425,73 +425,69 @@ class MarsExplorer {
         this.currentPromptElement = line;
     }
     
-    completeCurrentPrompt(command) {
+    async completeCurrentPrompt(command) {
         if (this.currentPromptElement) {
             // Remove the current prompt ID since it's no longer current
             this.currentPromptElement.removeAttribute('id');
             
             // Type the command part
-            this.typeText(this.currentPromptElement, 'ARES-IV:~$ ' + command, CONSOLE_TYPING_SPEED, () => {
-                const output = document.getElementById('console-output');
-                output.scrollTop = output.scrollHeight;
-            }, 10); // Start after 'ARES-IV:~$ '
+            await this.typeText(this.currentPromptElement, 'ARES-IV:~$ ' + command, CONSOLE_TYPING_SPEED, 10); // Start after 'ARES-IV:~$ '
+
+            const output = document.getElementById('console-output');
+            output.scrollTop = output.scrollHeight;
             
             this.currentPromptElement = null;
         }
     }
 
-    typeText(element, fullText, speed, callback, startIndex = 0) {
-        let index = startIndex;
-        
-        const typeInterval = setInterval(() => {
-            if (index < fullText.length) {
-                element.textContent = fullText.substring(0, index + 1);
-                index++;
-                // Auto-scroll during typing
-                const output = document.getElementById('console-output');
-                output.scrollTop = output.scrollHeight;
-            } else {
-                clearInterval(typeInterval);
-                if (callback) callback();
-            }
-        }, speed);
+    async typeText(element, fullText, speed, startIndex = 0) {
+        return new Promise((resolve) => {
+            let index = startIndex;
+            
+            const typeInterval = setInterval(() => {
+                if (index < fullText.length) {
+                    element.textContent = fullText.substring(0, index + 1);
+                    index++;
+                    // Auto-scroll during typing
+                    const output = document.getElementById('console-output');
+                    output.scrollTop = output.scrollHeight;
+                } else {
+                    clearInterval(typeInterval);
+                    resolve();
+                }
+            }, speed);
+        });
     }
 
-    processCommand(command) {
+    async processCommand(command) {
         // Complete the current prompt with the command
-        this.completeCurrentPrompt(command.toUpperCase());
+        await this.completeCurrentPrompt(command.toUpperCase());
         
         const cmd = command.toLowerCase();
         
-        // Delay command execution until command typing is complete
-        setTimeout(() => {
-            if (this.commands[cmd]) {
-                if (typeof this.commands[cmd] === 'function') {
-                    const result = this.commands[cmd]();
-                    if (result && cmd !== 'clear') {
-                        // Output with faster typing (20ms per character), show prompt when done
-                        this.addToConsole(result, 'success', CONSOLE_OUTPUT_SPEED, () => {
-                            this.showPrompt();
-                        });
-                    } else if (cmd !== 'clear') {
-                        // If no result but not clear command, show prompt immediately
-                        this.showPrompt();
-                    }
-                    // clearConsole handles its own prompt timing
-                } else {
-                    // Output with faster typing (20ms per character), show prompt when done
-                    this.addToConsole(this.commands[cmd], 'success', CONSOLE_OUTPUT_SPEED, () => {
-                        this.showPrompt();
-                    });
+        if (this.commands[cmd]) {
+            if (typeof this.commands[cmd] === 'function') {
+                const result = this.commands[cmd]();
+                if (result && cmd !== 'clear') {
+                    // Output with faster typing, then show prompt
+                    await this.addToConsole(result, 'success', CONSOLE_OUTPUT_SPEED);
+                    this.showPrompt();
+                } else if (cmd !== 'clear') {
+                    // If no result but not clear command, show prompt immediately
+                    this.showPrompt();
                 }
+                // clearConsole handles its own prompt timing
             } else {
-                // Error messages with faster typing (20ms per character)
-                this.addToConsole(`Command not recognized: ${command}`, 'error', CONSOLE_OUTPUT_SPEED);
-                this.addToConsole('Use the command buttons for available operations', 'warning', CONSOLE_OUTPUT_SPEED, () => {
-                    this.showPrompt(); // Show prompt after error messages
-                });
+                // Output with faster typing, then show prompt
+                await this.addToConsole(this.commands[cmd], 'success', CONSOLE_OUTPUT_SPEED);
+                this.showPrompt();
             }
-        }, command.toUpperCase().length * CONSOLE_TYPING_SPEED); // Wait for command typing to complete
+        } else {
+            // Error messages with faster typing
+            await this.addToConsole(`Command not recognized: ${command}`, 'error', CONSOLE_OUTPUT_SPEED);
+            await this.addToConsole('Use the command buttons for available operations', 'warning', CONSOLE_OUTPUT_SPEED);
+            this.showPrompt(); // Show prompt after error messages
+        }
     }
 
     getStatus() {
@@ -504,27 +500,39 @@ Weather: Clear, -63°C
 All systems nominal`;
     }
 
-    scanArea() {
-        this.addToConsole("SCANNING", 'warning');
-        this.addToConsole("..........", 'warning', 100);
-        this.addToConsole("Unknown signal detected\nStrength: -133.8 dBm", 'warning');
-        this.addToConsole("TRIANGULATION", 'warning');
-        this.addToConsole("..........", 'warning', 100);
-        this.addToConsole("Lat: 4.8049°S, Lon: 222.6215°W", 'warning');
+    async scanArea() {
+        const scanning = "SCANNING";
+        let scanning_line = await this.addToConsole(scanning, 'warning');
+        await this.typeText(scanning_line, scanning + "..........", 150, scanning.length);
+
+        await this.addToConsole("Unknown signal detected!\nStrength: -133.8 dBm", 'success');
+
+        const triangulation = "TRIANGULATION";
+        let triangulation_line = await this.addToConsole(triangulation, 'warning');
+        await this.typeText(triangulation_line, triangulation + "..........", 150, scanning.length);
+
+        await this.addToConsole("Lat: 4.8049°S, Lon: 222.6215°W", 'warning');
+
         const previousCommands = this.commands;
         this.commands = {
-            'YES': () => {
-                this.addToConsole("CONNECTION", 'warning');
-                this.addToConsole("..........", 'warning', 100);
-                this.addToConsole(" OK!", 'warning');
+            'YES': async () => {
+                const connecting = "CONNECTING";
+                let connecting_line = await this.addToConsole(connecting, 'warning');
+                const dots = "..........";
+                await this.typeText(connecting_line, connecting + dots, 150, connecting.length);
+                await this.typeText(connecting_line, connecting + dots + " DONE!", 150, (connecting + dots).length);
                 this.playVideo("rushes/waiting.mp4");
                 this.commands = previousCommands; // Restore commands
+                this.generateCommandButtons();
             },
             'NO': () => {
                 this.commands = previousCommands; // Restore commands
+                this.generateCommandButtons();
             }
         };
-        this.addToConsole("CONNECT TO SIGNAL ?", 'error');
+        await this.addToConsole("CONNECT TO SIGNAL ?", 'error');
+        this.generateCommandButtons();
+
         return null;
     }
 
@@ -622,18 +630,17 @@ SOL 2157: Weather monitoring systems operational`;
         return null;
     }
 
-    clearConsole() {
+    async clearConsole() {
         document.getElementById('console-output').innerHTML = '';
         this.currentPromptElement = null;
-        this.addToConsole('MARS EXPLORATION CONTROL SYSTEM v2.4.1', 'system', 20);
-        setTimeout(() => {
-            this.addToConsole(`SOL ${this.gameState.sol} - All systems nominal`, 'system', 20);
-            setTimeout(() => {
-                this.addToConsole('Console cleared. Use command buttons for operations', 'prompt', 20, () => {
-                    this.showPrompt(); // Show new prompt after all clear messages are done
-                });
-            }, 500);
-        }, 500);
+        
+        await this.addToConsole('MARS EXPLORATION CONTROL SYSTEM v2.4.1', 'system', CONSOLE_OUTPUT_SPEED);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await this.addToConsole(`SOL ${this.gameState.sol} - All systems nominal`, 'system', CONSOLE_OUTPUT_SPEED);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await this.addToConsole('Console cleared. Use command buttons for operations', 'prompt', CONSOLE_OUTPUT_SPEED);
+        
+        this.showPrompt(); // Show new prompt after all clear messages are done
         return null;
     }
 }
