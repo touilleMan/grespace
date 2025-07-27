@@ -391,17 +391,40 @@ class MarsExplorer {
         this.stopStatic();
     }
 
-    playVideo(videoPath) {
+    playVideo(videoPath, onVideoEnd = null) {
         const video = document.getElementById('mars-video');
         const source = video.querySelector('source');
+
+        console.log(`Playing video: ${videoPath}`, 'onVideoEnd: ', onVideoEnd);
         
+        // Remove loop attribute to allow ended event to fire
+        video.removeAttribute('loop');
+        
+        // Clean up any existing ended event listeners
+        video.removeEventListener("ended", this.currentVideoEndHandler);
+        
+        if (onVideoEnd) {
+            // Store the handler so we can remove it later
+            this.currentVideoEndHandler = (event) => {
+                const shouldLoop = onVideoEnd();
+                if (shouldLoop) {
+                    video.currentTime = 0;
+                    video.play();
+                }
+            };
+            video.addEventListener("ended", this.currentVideoEndHandler);
+        } else {
+            // If no callback, restore loop behavior
+            video.setAttribute('loop', '');
+        }
+
         // Update video source
         source.src = videoPath;
         video.load(); // Reload video with new source
-        
+
         // Hide no signal effect
         this.hideNoSignal();
-        
+
         // Play the video
         video.play().catch(error => {
             console.error('Error playing video:', error);
@@ -410,14 +433,16 @@ class MarsExplorer {
         });
     }
 
-    toggleLed() {
+    async toggleLed() {
         this.ledActive = !this.ledActive;
         const ledEffect = document.getElementById('led-effect');
         
         if (this.ledActive) {
             ledEffect.classList.add('active');
+            await this.addToConsole('Curiosity Rover: LED activated', 'success');
         } else {
             ledEffect.classList.remove('active');
+            await this.addToConsole('Curiosity Rover: LED disabled', 'success');
         }
     }
 
@@ -542,6 +567,9 @@ All systems nominal`;
         await this.typeText(triangulation_line, triangulation_and_dots + " DONE!", CONSOLE_OUTPUT_SPEED, triangulation_and_dots.length);
 
         await this.addToConsole("Lat: 4.8049°S, Lon: 222.6215°W", 'success');
+        await this.addToConsole("Mission ID: Mars Science Laboratory", 'success');
+        await this.addToConsole("Component ID: Curiosity Rover", 'success');
+        await this.addToConsole("Manufacturer ID: Jet Propulsion Laboratory", 'success');
 
         await this.addToConsole("CONNECT TO SIGNAL ?", 'error');
         const previousCommands = this.commands;
@@ -552,7 +580,24 @@ All systems nominal`;
                 let connecting_line = await this.addToConsole(connecting, 'warning');
                 await this.typeText(connecting_line, connecting_and_dots, 150, connecting.length);
                 await this.typeText(connecting_line, connecting_and_dots + " DONE!", CONSOLE_OUTPUT_SPEED, connecting_and_dots.length);
-                this.playVideo("rushes/waiting.mp4");
+                this.playVideo("rushes/waiting.mp4", () => {
+                    console.log("Video waiting finished, checking LED state", this.ledActive);
+                    if (this.ledActive) {
+                        this.commands = {}; // Game is finished
+                        this.generateCommandButtons();
+                        this.playVideo("rushes/led_success.mp4", () => {
+                            console.log("Video LED SUCCESS finished");
+                            // Turn off LED before the video finishes (since it is supposed to be *within* the video !)
+                            if (this.ledActive) {
+                                this.toggleLed();
+                            }
+                            this.showNoSignal();
+                        });
+                        return false; // Signify the caller to not loop the video
+                    } else {
+                        return true; // Loop the video
+                    }
+                });
                 this.commands = previousCommands; // Restore commands
                 delete this.commands['SCAN'];  // No longer used
                 this.commands['LED'] = () => this.toggleLed();

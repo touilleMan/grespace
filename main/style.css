@@ -405,17 +405,20 @@ body {
 
 .led-effect {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 30%, transparent 70%);
+    top: 72%;
+    left: 22%;
+    width: 3px;
+    height: 3px;
+    background: #00ff00;
     border-radius: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.3s ease;
     z-index: 5;
+    box-shadow: 
+        0 0 2px #00ff00,
+        0 0 4px rgba(0, 255, 0, 0.3);
 }
 
 .led-effect.active {
