@@ -1,6 +1,11 @@
 const CONSOLE_TYPING_SPEED = 80;
 const CONSOLE_OUTPUT_SPEED = 15;
 
+// Putain JS ! Sérieux quoi ?
+function sleep (time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
 // Mars Explorer Interactive System
 class MarsExplorer {
     constructor() {
@@ -12,6 +17,7 @@ class MarsExplorer {
             water: 85,
             discovered: []
         };
+        this.consolePageInitialized = false;
         this.flashlightActive = false;
         this.missionStartTime = new Date('2025-01-01T00:00:00Z');
         this.missionDuration = {
@@ -20,25 +26,14 @@ class MarsExplorer {
             minutes: 53,
             seconds: 17
         };
-        this.commands = {
-            'help': () => this.showHelp(),
-            // 'status': () => this.getStatus(),
-            // 'scan': () => this.scanArea(),
-            // 'drill': () => this.drillSample(),
-            // 'sample': () => this.analyzeSample(),
-            // 'weather': () => this.getWeather(),
-            // 'navigate': () => this.navigate(),
-            // 'power': () => this.checkPower(),
-            // 'comms': () => this.communications(),
-            // 'log': () => this.showLog(),
-            // 'clear': () => this.clearConsole()
-        };
+        // Start with no commands, the first one (i.e. `help`) will be added
+        // once the console initialization animation is done.
+        this.commands = {};
         this.init();
     }
 
     init() {
         this.bindEvents();
-        this.setupConsole();
         this.generateCommandButtons();
         this.startTimers();
         this.setupVideoEffects();
@@ -143,9 +138,12 @@ class MarsExplorer {
         setTimeout(() => {
             document.getElementById(`${pageId}-page`).classList.add('active');
             this.currentPage = pageId;
-            
-            // Focus management removed since we're using buttons now
-        }, 100);
+
+            if (pageId === 'control' && !this.consolePageInitialized) {
+                this.setupConsole();
+                this.consolePageInitialized = true;
+            }
+        }, 80);
     }
 
     openModal() {
@@ -156,10 +154,16 @@ class MarsExplorer {
         document.getElementById('about-modal').classList.remove('active');
     }
 
-    setupConsole() {
-        const output = document.getElementById('console-output');
-        this.addToConsole('Ready for commands. Click a command button to begin.', 'prompt');
-        this.showPrompt(); // Show initial prompt
+    async setupConsole() {
+        await sleep(500);
+        await this.addToConsole('MARS EXPLORATION CONTROL SYSTEM v2.4.1', 'system');
+        await sleep(500);
+        await this.addToConsole(`SOL ${this.gameState.sol} - All systems nominal`, 'system');
+        await sleep(500);
+        await this.addToConsole('Ready for commands. Use command buttons for operations.', 'prompt');
+        this.createNextPrompt(); // Show initial prompt
+        this.commands['help'] = () => this.showHelp();
+        this.generateCommandButtons();
     }
     
     generateCommandButtons() {
@@ -185,7 +189,22 @@ class MarsExplorer {
         });
     }
     
-    showHelp() {
+    disableCommandButtons() {
+        const buttons = document.querySelectorAll('.command-btn');
+        buttons.forEach(button => {
+            button.disabled = true;
+        });
+    }
+    
+    enableCommandButtons() {
+        const buttons = document.querySelectorAll('.command-btn');
+        buttons.forEach(button => {
+            button.disabled = false;
+        });
+    }
+    
+    async showHelp() {
+        // At first only the help command is available, using it unlocks more commands
         var needRefreshCommandButtons = false;
         if (this.commands['log'] == undefined) {
             this.commands['log'] = () => this.showLog();
@@ -204,7 +223,7 @@ class MarsExplorer {
         }
 
         const availableCommands = Object.keys(this.commands).join(', ');
-        return `Available commands: ${availableCommands}`;
+        await this.addToConsole(`Available commands: ${availableCommands}`);
     }
 
     setupVideoEffects() {
@@ -414,11 +433,11 @@ class MarsExplorer {
         return line;
     }
     
-    showPrompt() {
+    createNextPrompt(promptText = 'ARES-IV:~$ ') {
         const output = document.getElementById('console-output');
         const line = document.createElement('div');
         line.className = 'output-line normal';
-        line.textContent = 'ARES-IV:~$ ';
+        line.textContent = promptText;
         line.id = 'current-prompt'; // Mark as current prompt
         output.appendChild(line);
         output.scrollTop = output.scrollHeight;
@@ -431,7 +450,12 @@ class MarsExplorer {
             this.currentPromptElement.removeAttribute('id');
             
             // Type the command part
-            await this.typeText(this.currentPromptElement, 'ARES-IV:~$ ' + command, CONSOLE_TYPING_SPEED, 10); // Start after 'ARES-IV:~$ '
+            await this.typeText(
+                this.currentPromptElement,
+                this.currentPromptElement.textContent + command,
+                CONSOLE_TYPING_SPEED,
+                this.currentPromptElement.textContent.length  // Start typing after the prompt text
+            );
 
             const output = document.getElementById('console-output');
             output.scrollTop = output.scrollHeight;
@@ -460,33 +484,37 @@ class MarsExplorer {
     }
 
     async processCommand(command) {
-        // Complete the current prompt with the command
-        await this.completeCurrentPrompt(command.toUpperCase());
-        
-        const cmd = command.toLowerCase();
-        
-        if (this.commands[cmd]) {
-            if (typeof this.commands[cmd] === 'function') {
-                const result = this.commands[cmd]();
-                if (result && cmd !== 'clear') {
-                    // Output with faster typing, then show prompt
-                    await this.addToConsole(result, 'success', CONSOLE_OUTPUT_SPEED);
-                    this.showPrompt();
-                } else if (cmd !== 'clear') {
-                    // If no result but not clear command, show prompt immediately
-                    this.showPrompt();
+        this.disableCommandButtons();
+        let displayPromptText = true;
+        try {
+            // Complete the current prompt with the command
+            await this.completeCurrentPrompt(command.toUpperCase());
+            
+            const cmd = command.toLowerCase();
+            
+            console.log(`Processing command: ${cmd}`, this.commands[cmd]);
+            console.log(this.commands);
+            if (this.commands[cmd]) {
+                const noPrompt = await this.commands[cmd]();
+                console.log("Command executed, no prompt:", noPrompt);
+                if (noPrompt === false) {
+                    displayPromptText = false;
                 }
-                // clearConsole handles its own prompt timing
             } else {
-                // Output with faster typing, then show prompt
-                await this.addToConsole(this.commands[cmd], 'success', CONSOLE_OUTPUT_SPEED);
-                this.showPrompt();
+                // Error messages with faster typing
+                await this.addToConsole(`Command not recognized: ${command}`, 'error', CONSOLE_OUTPUT_SPEED);
+                await this.addToConsole('Use the command buttons for available operations', 'warning', CONSOLE_OUTPUT_SPEED);
             }
-        } else {
-            // Error messages with faster typing
-            await this.addToConsole(`Command not recognized: ${command}`, 'error', CONSOLE_OUTPUT_SPEED);
-            await this.addToConsole('Use the command buttons for available operations', 'warning', CONSOLE_OUTPUT_SPEED);
-            this.showPrompt(); // Show prompt after error messages
+
+        } finally {
+            if (displayPromptText) {
+                this.createNextPrompt();
+            } else {
+                // Must still create the line that will contain the input typed
+                // by the user, but we ask for no prompt text
+                this.createNextPrompt('');
+            }
+            this.enableCommandButtons();
         }
     }
 
@@ -502,38 +530,42 @@ All systems nominal`;
 
     async scanArea() {
         const scanning = "SCANNING";
+        const scanning_and_dots = `${scanning}..........`;
         let scanning_line = await this.addToConsole(scanning, 'warning');
-        await this.typeText(scanning_line, scanning + "..........", 150, scanning.length);
+        await this.typeText(scanning_line, scanning_and_dots, 150, scanning.length);
+        await this.typeText(scanning_line, scanning_and_dots + " DONE!", CONSOLE_OUTPUT_SPEED, scanning_and_dots.length);
 
         await this.addToConsole("Unknown signal detected!\nStrength: -133.8 dBm", 'success');
 
         const triangulation = "TRIANGULATION";
+        const triangulation_and_dots = `${triangulation}..........`;
         let triangulation_line = await this.addToConsole(triangulation, 'warning');
-        await this.typeText(triangulation_line, triangulation + "..........", 150, scanning.length);
+        await this.typeText(triangulation_line, triangulation_and_dots, 150, triangulation.length);
+        await this.typeText(triangulation_line, triangulation_and_dots + " DONE!", CONSOLE_OUTPUT_SPEED, triangulation_and_dots.length);
 
-        await this.addToConsole("Lat: 4.8049°S, Lon: 222.6215°W", 'warning');
+        await this.addToConsole("Lat: 4.8049°S, Lon: 222.6215°W", 'success');
 
+        await this.addToConsole("CONNECT TO SIGNAL ?", 'error');
         const previousCommands = this.commands;
         this.commands = {
-            'YES': async () => {
+            'yes': async () => {
                 const connecting = "CONNECTING";
+                const connecting_and_dots = `${connecting}..........`;
                 let connecting_line = await this.addToConsole(connecting, 'warning');
-                const dots = "..........";
-                await this.typeText(connecting_line, connecting + dots, 150, connecting.length);
-                await this.typeText(connecting_line, connecting + dots + " DONE!", 150, (connecting + dots).length);
+                await this.typeText(connecting_line, connecting_and_dots, 150, connecting.length);
+                await this.typeText(connecting_line, connecting_and_dots + " DONE!", CONSOLE_OUTPUT_SPEED, connecting_and_dots.length);
                 this.playVideo("rushes/waiting.mp4");
                 this.commands = previousCommands; // Restore commands
                 this.generateCommandButtons();
             },
-            'NO': () => {
+            'no': () => {
                 this.commands = previousCommands; // Restore commands
                 this.generateCommandButtons();
             }
         };
-        await this.addToConsole("CONNECT TO SIGNAL ?", 'error');
         this.generateCommandButtons();
 
-        return null;
+        return false; // Disable prompt display
     }
 
     drillSample() {
@@ -619,29 +651,20 @@ Est. operational days: ${Math.floor(this.gameState.power / 2)}`;
         return null;
     }
 
-    showLog() {
+    async showLog() {
         const logs = `MISSION LOG ENTRIES:
 SOL 2155: Arrived at Acidalia Planitia base camp
 SOL 2156: Completed habitat setup and system checks
 SOL 2157: Beginning geological survey operations
 SOL 2157: Weather monitoring systems operational`;
         
-        this.addToConsole(logs, 'system');
-        return null;
+        await this.addToConsole(logs, 'system');
     }
 
     async clearConsole() {
         document.getElementById('console-output').innerHTML = '';
         this.currentPromptElement = null;
-        
-        await this.addToConsole('MARS EXPLORATION CONTROL SYSTEM v2.4.1', 'system', CONSOLE_OUTPUT_SPEED);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        await this.addToConsole(`SOL ${this.gameState.sol} - All systems nominal`, 'system', CONSOLE_OUTPUT_SPEED);
-        await new Promise(resolve => setTimeout(resolve, 500));
         await this.addToConsole('Console cleared. Use command buttons for operations', 'prompt', CONSOLE_OUTPUT_SPEED);
-        
-        this.showPrompt(); // Show new prompt after all clear messages are done
-        return null;
     }
 }
 
