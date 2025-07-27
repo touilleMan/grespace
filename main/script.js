@@ -167,6 +167,11 @@ class MarsExplorer {
         const video = document.getElementById('mars-video');
         const noSignal = document.getElementById('no-signal');
         
+        // Initialize TV static with a small delay to ensure DOM is ready
+        setTimeout(() => {
+            this.initTVStatic();
+        }, 100);
+        
         // Show no signal by default (since there's likely no video file)
         this.showNoSignal();
         
@@ -192,11 +197,124 @@ class MarsExplorer {
         });
     }
     
+    initTVStatic() {
+        this.canvas = document.getElementById('static-canvas');
+        if (!this.canvas) {
+            console.error('Static canvas not found');
+            return;
+        }
+        
+        this.ctx = this.canvas.getContext('2d');
+        this.staticAnimationId = null;
+        
+        // Set canvas size
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+        
+        // Start static animation
+        this.animateStatic();
+    }
+    
+    resizeCanvas() {
+        const viewport = document.querySelector('.video-viewport');
+        if (viewport && this.canvas) {
+            this.canvas.width = viewport.clientWidth;
+            this.canvas.height = viewport.clientHeight;
+        }
+    }
+    
+    generateTVStatic() {
+        if (!this.canvas || !this.ctx) return;
+        
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        
+        if (width === 0 || height === 0) return;
+        
+        const imageData = this.ctx.createImageData(width, height);
+        const data = imageData.data;
+        
+        const grainSize = 4; // Size of each grain pixel
+        
+        for (let x = 0; x < width; x += grainSize) {
+            for (let y = 0; y < height; y += grainSize) {
+                // Generate random noise value
+                const noise = Math.random();
+                
+                // Create color variations for more realistic TV static
+                let r, g, b, a;
+                
+                if (noise > 0.95) {
+                    // Bright white pixels (5% chance)
+                    r = g = b = 255;
+                    a = 200;
+                } else if (noise > 0.9) {
+                    // Blue tinted pixels (5% chance)
+                    r = Math.floor(noise * 100);
+                    g = Math.floor(noise * 120);
+                    b = Math.floor(noise * 255);
+                    a = 150;
+                } else if (noise > 0.85) {
+                    // Orange tinted pixels (5% chance)
+                    r = Math.floor(noise * 255);
+                    g = Math.floor(noise * 180);
+                    b = Math.floor(noise * 100);
+                    a = 150;
+                } else if (noise > 0.7) {
+                    // Gray pixels (15% chance)
+                    const gray = Math.floor(noise * 180);
+                    r = g = b = gray;
+                    a = 120;
+                } else {
+                    // Transparent/dark pixels (70% chance)
+                    r = g = b = 0;
+                    a = 0;
+                }
+                
+                // Fill grain-sized blocks
+                for (let dx = 0; dx < grainSize && x + dx < width; dx++) {
+                    for (let dy = 0; dy < grainSize && y + dy < height; dy++) {
+                        const index = ((y + dy) * width + (x + dx)) * 4;
+                        data[index] = r;     // Red
+                        data[index + 1] = g; // Green
+                        data[index + 2] = b; // Blue
+                        data[index + 3] = a; // Alpha
+                    }
+                }
+            }
+        }
+        
+        this.ctx.putImageData(imageData, 0, 0);
+    }
+    
+    animateStatic() {
+        this.generateTVStatic();
+        
+        // Random frame rate between 150-300ms for slower, more realistic TV static
+        const nextFrameDelay = 150 + Math.random() * 150;
+        
+        this.staticAnimationId = setTimeout(() => {
+            this.animateStatic();
+        }, nextFrameDelay);
+    }
+    
+    stopStatic() {
+        if (this.staticAnimationId) {
+            clearTimeout(this.staticAnimationId);
+            this.staticAnimationId = null;
+        }
+    }
+    
     showNoSignal() {
         const noSignal = document.getElementById('no-signal');
         const video = document.getElementById('mars-video');
         noSignal.classList.add('active');
         video.style.opacity = '0';
+        
+        // Start static animation if not running
+        if (!this.staticAnimationId && this.canvas) {
+            this.animateStatic();
+        }
     }
     
     hideNoSignal() {
@@ -204,6 +322,9 @@ class MarsExplorer {
         const video = document.getElementById('mars-video');
         noSignal.classList.remove('active');
         video.style.opacity = '1';
+        
+        // Stop static animation to save resources
+        this.stopStatic();
     }
 
     toggleFlashlight() {
