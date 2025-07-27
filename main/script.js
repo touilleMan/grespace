@@ -1,3 +1,6 @@
+const CONSOLE_TYPING_SPEED = 80;
+const CONSOLE_OUTPUT_SPEED = 20;
+
 // Mars Explorer Interactive System
 class MarsExplorer {
     constructor() {
@@ -156,6 +159,7 @@ class MarsExplorer {
     setupConsole() {
         const output = document.getElementById('console-output');
         this.addToConsole('Ready for commands. Click a command button to begin.', 'prompt');
+        this.showPrompt(); // Show initial prompt
     }
     
     generateCommandButtons() {
@@ -199,18 +203,8 @@ class MarsExplorer {
             this.generateCommandButtons();
         }
 
-            // 'status': () => this.getStatus(),
-            // 'drill': () => this.drillSample(),
-            // 'sample': () => this.analyzeSample(),
-            // 'weather': () => this.getWeather(),
-            // 'navigate': () => this.navigate(),
-            // 'power': () => this.checkPower(),
-            // 'comms': () => this.communications(),
-
-
         const availableCommands = Object.keys(this.commands).join(', ');
-        this.addToConsole(`Available commands: ${availableCommands}`, 'success');
-        return null;
+        return `Available commands: ${availableCommands}`;
     }
 
     setupVideoEffects() {
@@ -407,57 +401,130 @@ class MarsExplorer {
         }
     }
 
-    addToConsole(text, type = 'normal') {
+    addToConsole(text, type = 'normal', speed = CONSOLE_OUTPUT_SPEED, callback = null) {
         const output = document.getElementById('console-output');
         const line = document.createElement('div');
         line.className = `output-line ${type}`;
-        line.textContent = text;
+        output.appendChild(line);
+        
+        // Start typing animation
+        this.typeText(line, text, speed, () => {
+            output.scrollTop = output.scrollHeight;
+            if (callback) callback();
+        });
+    }
+    
+    showPrompt() {
+        const output = document.getElementById('console-output');
+        const line = document.createElement('div');
+        line.className = 'output-line normal';
+        line.textContent = 'ARES-IV:~$ ';
+        line.id = 'current-prompt'; // Mark as current prompt
         output.appendChild(line);
         output.scrollTop = output.scrollHeight;
+        this.currentPromptElement = line;
     }
-
-    processCommand(command) {
-        this.addToConsole(`ARES-IV:~$ ${command.toUpperCase()}`, 'normal');
-        
-        const cmd = command.toLowerCase();
-        
-        if (this.commands[cmd]) {
-            if (typeof this.commands[cmd] === 'function') {
-                const result = this.commands[cmd]();
-                if (result) this.addToConsole(result, 'success');
-            } else {
-                this.addToConsole(this.commands[cmd], 'success');
-            }
-        } else {
-            this.addToConsole(`Command not recognized: ${command}`, 'error');
-            this.addToConsole('Use the command buttons for available operations', 'warning');
+    
+    completeCurrentPrompt(command) {
+        if (this.currentPromptElement) {
+            // Remove the current prompt ID since it's no longer current
+            this.currentPromptElement.removeAttribute('id');
+            
+            // Type the command part
+            this.typeText(this.currentPromptElement, 'ARES-IV:~$ ' + command, CONSOLE_TYPING_SPEED, () => {
+                const output = document.getElementById('console-output');
+                output.scrollTop = output.scrollHeight;
+            }, 10); // Start after 'ARES-IV:~$ '
+            
+            this.currentPromptElement = null;
         }
     }
 
+    typeText(element, fullText, speed, callback, startIndex = 0) {
+        let index = startIndex;
+        
+        const typeInterval = setInterval(() => {
+            if (index < fullText.length) {
+                element.textContent = fullText.substring(0, index + 1);
+                index++;
+                // Auto-scroll during typing
+                const output = document.getElementById('console-output');
+                output.scrollTop = output.scrollHeight;
+            } else {
+                clearInterval(typeInterval);
+                if (callback) callback();
+            }
+        }, speed);
+    }
+
+    processCommand(command) {
+        // Complete the current prompt with the command
+        this.completeCurrentPrompt(command.toUpperCase());
+        
+        const cmd = command.toLowerCase();
+        
+        // Delay command execution until command typing is complete
+        setTimeout(() => {
+            if (this.commands[cmd]) {
+                if (typeof this.commands[cmd] === 'function') {
+                    const result = this.commands[cmd]();
+                    if (result && cmd !== 'clear') {
+                        // Output with faster typing (20ms per character), show prompt when done
+                        this.addToConsole(result, 'success', CONSOLE_OUTPUT_SPEED, () => {
+                            this.showPrompt();
+                        });
+                    } else if (cmd !== 'clear') {
+                        // If no result but not clear command, show prompt immediately
+                        this.showPrompt();
+                    }
+                    // clearConsole handles its own prompt timing
+                } else {
+                    // Output with faster typing (20ms per character), show prompt when done
+                    this.addToConsole(this.commands[cmd], 'success', CONSOLE_OUTPUT_SPEED, () => {
+                        this.showPrompt();
+                    });
+                }
+            } else {
+                // Error messages with faster typing (20ms per character)
+                this.addToConsole(`Command not recognized: ${command}`, 'error', CONSOLE_OUTPUT_SPEED);
+                this.addToConsole('Use the command buttons for available operations', 'warning', CONSOLE_OUTPUT_SPEED, () => {
+                    this.showPrompt(); // Show prompt after error messages
+                });
+            }
+        }, command.toUpperCase().length * CONSOLE_TYPING_SPEED); // Wait for command typing to complete
+    }
+
     getStatus() {
-        const status = `SOL ${this.gameState.sol} STATUS REPORT:
+        return `SOL ${this.gameState.sol} STATUS REPORT:
 Power: ${this.gameState.power}%
 Oxygen: ${this.gameState.oxygen}%
 Water: ${this.gameState.water}%
 Location: Acidalia Planitia
 Weather: Clear, -63°C
 All systems nominal`;
-        this.addToConsole(status, 'system');
-        return null;
     }
 
     scanArea() {
-        this.playVideo("rushes/waiting.mp4");
-        const discoveries = [
-            'Iron oxide deposits detected 50m north',
-            'Unusual rock formation identified',
-            'Subsurface water ice signatures detected',
-            'Methane traces in atmosphere',
-            'Possible microbial activity indicators'
-        ];
-        
-        const random = discoveries[Math.floor(Math.random() * discoveries.length)];
-        this.addToConsole(`SCANNING... ${random}`, 'success');
+        this.addToConsole("SCANNING", 'warning');
+        this.addToConsole("..........", 'warning', 100);
+        this.addToConsole("Unknown signal detected\nStrength: -133.8 dBm", 'warning');
+        this.addToConsole("TRIANGULATION", 'warning');
+        this.addToConsole("..........", 'warning', 100);
+        this.addToConsole("Lat: 4.8049°S, Lon: 222.6215°W", 'warning');
+        const previousCommands = this.commands;
+        this.commands = {
+            'YES': () => {
+                this.addToConsole("CONNECTION", 'warning');
+                this.addToConsole("..........", 'warning', 100);
+                this.addToConsole(" OK!", 'warning');
+                this.playVideo("rushes/waiting.mp4");
+                this.commands = previousCommands; // Restore commands
+            },
+            'NO': () => {
+                this.commands = previousCommands; // Restore commands
+            }
+        };
+        this.addToConsole("CONNECT TO SIGNAL ?", 'error');
         return null;
     }
 
@@ -557,9 +624,16 @@ SOL 2157: Weather monitoring systems operational`;
 
     clearConsole() {
         document.getElementById('console-output').innerHTML = '';
-        this.addToConsole('MARS EXPLORATION CONTROL SYSTEM v2.4.1', 'system');
-        this.addToConsole(`SOL ${this.gameState.sol} - All systems nominal`, 'system');
-        this.addToConsole('Console cleared. Use command buttons for operations', 'prompt');
+        this.currentPromptElement = null;
+        this.addToConsole('MARS EXPLORATION CONTROL SYSTEM v2.4.1', 'system', 20);
+        setTimeout(() => {
+            this.addToConsole(`SOL ${this.gameState.sol} - All systems nominal`, 'system', 20);
+            setTimeout(() => {
+                this.addToConsole('Console cleared. Use command buttons for operations', 'prompt', 20, () => {
+                    this.showPrompt(); // Show new prompt after all clear messages are done
+                });
+            }, 500);
+        }, 500);
         return null;
     }
 }
