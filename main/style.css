@@ -1,0 +1,550 @@
+/* Mars Explorer - Hard SF Style */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a1810 100%);
+    color: #e0e0e0;
+    overflow: hidden;
+    height: 100vh;
+}
+
+.page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.5s ease-in-out;
+}
+
+.page.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Welcome Page */
+#welcome-page {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: radial-gradient(circle at center, #2a1810 0%, #0a0a0a 70%);
+}
+
+.mars-animation {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 2rem;
+}
+
+.mars-sphere {
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle at 30% 30%, #cd5c5c, #8b0000, #654321);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: rotate 16s linear infinite;
+    box-shadow: 
+        inset -20px -20px 40px rgba(0,0,0,0.4),
+        0 0 40px rgba(205, 92, 92, 0.3);
+}
+
+.orbital-path {
+    width: 200px;
+    height: 200px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.satellite {
+    width: 8px;
+    height: 8px;
+    background: #ffffff;
+    border-radius: 50%;
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform-origin: 0 104px;
+    animation: orbit 12s linear infinite;
+    box-shadow: 0 0 6px #ffffff;
+}
+
+@keyframes rotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes orbit {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.welcome-title {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: bold;
+    letter-spacing: 3px;
+    color: #cd5c5c;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 20px rgba(205, 92, 92, 0.5);
+}
+
+.mission-details {
+    margin-bottom: 2rem;
+}
+
+.mission-coordinates {
+    font-size: clamp(0.8rem, 2vw, 1rem);
+    color: #a0a0a0;
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
+}
+
+.time-displays {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.mars-time, .mission-time {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.time-label {
+    font-size: clamp(0.7rem, 1.8vw, 0.9rem);
+    color: #cd5c5c;
+    letter-spacing: 1px;
+}
+
+.time-value {
+    font-size: clamp(0.8rem, 2vw, 1rem);
+    color: #ffffff;
+    font-weight: bold;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    border: 1px solid #cd5c5c;
+}
+
+.cta-button {
+    background: linear-gradient(45deg, #cd5c5c, #ff6b6b);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(205, 92, 92, 0.3);
+}
+
+.cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(205, 92, 92, 0.5);
+}
+
+/* Main Video Page */
+#main-page {
+    justify-content: center;
+    align-items: center;
+    background: #000;
+}
+
+.video-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#mars-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.overlay-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 15px;
+    z-index: 10;
+}
+
+.control-btn, .flashlight-btn {
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #cd5c5c;
+    border-radius: 50%;
+    color: #cd5c5c;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn:hover, .flashlight-btn:hover {
+    background: rgba(205, 92, 92, 0.3);
+    transform: scale(1.1);
+}
+
+.about-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.about-btn-corner {
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #cd5c5c;
+    border-radius: 50%;
+    color: #cd5c5c;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.about-btn-corner:hover {
+    background: rgba(205, 92, 92, 0.3);
+    transform: scale(1.1);
+}
+
+.flashlight-effect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 30%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 5;
+}
+
+.flashlight-effect.active {
+    opacity: 1;
+}
+
+/* Control Page */
+#control-page {
+    background: #0a0a0a;
+    padding: 20px;
+}
+
+.console-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #cd5c5c;
+}
+
+.console-header h2 {
+    color: #cd5c5c;
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    letter-spacing: 2px;
+}
+
+.back-btn {
+    background: transparent;
+    border: 1px solid #cd5c5c;
+    color: #cd5c5c;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-family: inherit;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: rgba(205, 92, 92, 0.2);
+}
+
+.console-container {
+    height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+}
+
+.console-output {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #333;
+    padding: 15px;
+    overflow-y: auto;
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    line-height: 1.4;
+}
+
+.output-line {
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+}
+
+.output-line.system {
+    color: #4a9;
+}
+
+.output-line.error {
+    color: #f66;
+}
+
+.output-line.warning {
+    color: #fa3;
+}
+
+.output-line.success {
+    color: #6f6;
+}
+
+.output-line.prompt {
+    color: #cd5c5c;
+}
+
+.console-commands {
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid #cd5c5c;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.commands-header {
+    color: #cd5c5c;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+}
+
+.command-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+    max-width: 100%;
+}
+
+.command-btn {
+    background: transparent;
+    border: 1px solid #cd5c5c;
+    color: #cd5c5c;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: clamp(0.7rem, 1.8vw, 0.8rem);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.command-btn:hover {
+    background: rgba(205, 92, 92, 0.2);
+    transform: translateY(-1px);
+}
+
+.command-btn:active {
+    transform: translateY(0);
+    background: rgba(205, 92, 92, 0.4);
+}
+
+/* About Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1a1a1a, #2a1810);
+    border: 2px solid #cd5c5c;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #cd5c5c;
+}
+
+.modal-header h2 {
+    color: #cd5c5c;
+    font-size: 1.3rem;
+    letter-spacing: 1px;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: #cd5c5c;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.close-btn:hover {
+    background: rgba(205, 92, 92, 0.2);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.company-info h3 {
+    color: #cd5c5c;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.company-info p {
+    color: #a0a0a0;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.link-btn {
+    display: block;
+    background: transparent;
+    border: 1px solid #cd5c5c;
+    color: #cd5c5c;
+    padding: 10px 15px;
+    text-decoration: none;
+    text-align: center;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.link-btn:hover {
+    background: rgba(205, 92, 92, 0.2);
+    transform: translateY(-1px);
+}
+
+.maps-note {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(205, 92, 92, 0.3);
+}
+
+.maps-note p {
+    font-size: 0.85rem;
+    color: #888;
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .overlay-controls {
+        top: 15px;
+        right: 15px;
+        gap: 10px;
+    }
+    
+    .control-btn, .about-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1rem;
+    }
+    
+    .console-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .links {
+        gap: 15px;
+    }
+    
+    .console-output {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .mars-animation {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .mars-sphere {
+        width: 90px;
+        height: 90px;
+    }
+    
+    .orbital-path {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .satellite {
+        transform-origin: 0 75px;
+    }
+}

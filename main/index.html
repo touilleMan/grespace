@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mars Explorer - Hard SF</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Welcome Page -->
+        <div id="welcome-page" class="page active">
+            <div class="mars-animation">
+                <div class="mars-sphere"></div>
+                <div class="orbital-path"></div>
+                <div class="satellite"></div>
+            </div>
+            <h1 class="welcome-title">ARES IV MARS EXPLORATION MISSION</h1>
+            <div class="mission-details">
+                <p class="mission-coordinates">Lat: 4.8047°S, Lon: 222.6207°W</p>
+                <div class="time-displays">
+                    <div class="mars-time">
+                        <span class="time-label">MARS TIME:</span>
+                        <span id="mars-clock" class="time-value">00:00:00</span>
+                    </div>
+                    <div class="mission-time">
+                        <span class="time-label">MISSION TIME:</span>
+                        <span id="mission-timer" class="time-value">149d 18h 53m 17s</span>
+                    </div>
+                </div>
+            </div>
+            <button id="enter-mission" class="cta-button">PROCEED</button>
+        </div>
+
+        <!-- Main Video Page -->
+        <div id="main-page" class="page">
+            <div class="video-container">
+                <video id="mars-video" controls>
+                    <source src="mars-footage.mp4" type="video/mp4">
+                    Mars exploration footage not available
+                </video>
+            </div>
+            <div class="overlay-controls">
+                <button id="toggle-control" class="control-btn">
+                    <span class="icon">⚙</span>
+                </button>
+                <button id="toggle-flashlight" class="flashlight-btn">
+                    <span class="icon">🔦</span>
+                </button>
+            </div>
+            <div class="about-icon">
+                <button id="open-about" class="about-btn-corner">
+                    <span class="icon">ℹ</span>
+                </button>
+            </div>
+            <div id="flashlight-effect" class="flashlight-effect"></div>
+        </div>
+
+        <!-- Control Page -->
+        <div id="control-page" class="page">
+            <div class="console-header">
+                <h2>MISSION CONTROL TERMINAL</h2>
+                <button id="back-to-main" class="back-btn">◀ MAIN</button>
+            </div>
+            <div class="console-container">
+                <div id="console-output" class="console-output">
+                    <div class="output-line system">MARS EXPLORATION CONTROL SYSTEM v2.4.1</div>
+                    <div class="output-line system">SOL 2157 - All systems nominal</div>
+                    <div class="output-line prompt">Type 'help' for available commands</div>
+                </div>
+                <div class="console-commands">
+                    <div class="commands-header">Available Commands:</div>
+                    <div class="command-buttons">
+                        <button class="command-btn" data-command="status">STATUS</button>
+                        <button class="command-btn" data-command="scan">SCAN</button>
+                        <button class="command-btn" data-command="drill">DRILL</button>
+                        <button class="command-btn" data-command="sample">SAMPLE</button>
+                        <button class="command-btn" data-command="weather">WEATHER</button>
+                        <button class="command-btn" data-command="navigate">NAVIGATE</button>
+                        <button class="command-btn" data-command="power">POWER</button>
+                        <button class="command-btn" data-command="comms">COMMS</button>
+                        <button class="command-btn" data-command="log">LOG</button>
+                        <button class="command-btn" data-command="clear">CLEAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Modal -->
+        <div id="about-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>MISSION DETAILS</h2>
+                    <button id="close-about" class="close-btn">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="company-info">
+                        <h3>Mars Exploration Technologies</h3>
+                        <p>Leading the future of interplanetary exploration and human survival on Mars.</p>
+                        <div class="links">
+                            <a href="#" id="company-website" class="link-btn">Company Website</a>
+                            <a href="#" id="company-location" class="link-btn">Rate us on Google Maps</a>
+                        </div>
+                        <div class="maps-note">
+                            <p>Help us improve our mission support by leaving a review on Google Maps!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

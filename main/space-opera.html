@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mars Explorer - Galactic Federation</title>
+    <link rel="stylesheet" href="style-opera.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Welcome Page -->
+        <div id="welcome-page" class="page active">
+            <div class="stellar-field">
+                <div class="mars-hero"></div>
+                <div class="orbital-station"></div>
+                <div class="starfield"></div>
+                <div class="nebula"></div>
+            </div>
+            <h1 class="welcome-title">GALACTIC FEDERATION</h1>
+            <h2 class="subtitle">MARS EXPEDITION COMMAND</h2>
+            <p class="mission-code">OPERATION RED HORIZON</p>
+            <button id="enter-mission" class="cta-button">JOIN THE FLEET</button>
+        </div>
+
+        <!-- Main Video Page -->
+        <div id="main-page" class="page">
+            <div class="video-container">
+                <video id="mars-video" controls>
+                    <source src="mars-footage.mp4" type="video/mp4">
+                    Galactic expedition footage not available
+                </video>
+                <div class="hologram-overlay"></div>
+            </div>
+            <div class="overlay-controls">
+                <button id="toggle-control" class="control-btn">
+                    <span class="icon">⬢</span>
+                </button>
+                <button id="open-about" class="about-btn">
+                    <span class="icon">★</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Control Page -->
+        <div id="control-page" class="page">
+            <div class="console-header">
+                <h2>GALACTIC COMMAND CENTER</h2>
+                <button id="back-to-main" class="back-btn">◀ STARVIEW</button>
+            </div>
+            <div class="console-container">
+                <div id="console-output" class="console-output">
+                    <div class="output-line system">FEDERATION COMMAND SYSTEM v12.7.1</div>
+                    <div class="output-line system">Stardate 2157.342 - All fleets operational</div>
+                    <div class="output-line success">Welcome, Commander. The galaxy awaits your orders.</div>
+                    <div class="output-line prompt">Enter command to proceed with the mission</div>
+                </div>
+                <div class="console-input-container">
+                    <span class="prompt-symbol">CMD:~> </span>
+                    <input type="text" id="console-input" class="console-input" autocomplete="off">
+                </div>
+            </div>
+        </div>
+
+        <!-- About Modal -->
+        <div id="about-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>FEDERATION DATABASE</h2>
+                    <button id="close-about" class="close-btn">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="company-info">
+                        <h3>Galactic Federation Command</h3>
+                        <p>United species exploring the cosmos for peace and prosperity</p>
+                        <div class="links">
+                            <a href="#" id="company-website" class="link-btn">Federation Central</a>
+                            <a href="#" id="company-location" class="link-btn">Earth Command Base</a>
+                        </div>
+                        <div class="federation-badge">
+                            <div class="rank">★ COMMANDER RANK ★</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script-opera.js"></script>
+</body>
+</html>
