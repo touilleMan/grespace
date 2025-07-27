@@ -37,6 +37,7 @@ class MarsExplorer {
         this.bindEvents();
         this.setupConsole();
         this.startTimers();
+        this.setupVideoEffects();
     }
 
     startTimers() {
@@ -160,6 +161,49 @@ class MarsExplorer {
     setupConsole() {
         const output = document.getElementById('console-output');
         this.addToConsole('Ready for commands. Click a command button to begin.', 'prompt');
+    }
+
+    setupVideoEffects() {
+        const video = document.getElementById('mars-video');
+        const noSignal = document.getElementById('no-signal');
+        
+        // Show no signal by default (since there's likely no video file)
+        this.showNoSignal();
+        
+        // Listen for video events
+        video.addEventListener('loadstart', () => {
+            this.showNoSignal();
+        });
+        
+        video.addEventListener('canplay', () => {
+            this.hideNoSignal();
+        });
+        
+        video.addEventListener('error', () => {
+            this.showNoSignal();
+        });
+        
+        video.addEventListener('stalled', () => {
+            this.showNoSignal();
+        });
+        
+        video.addEventListener('waiting', () => {
+            this.showNoSignal();
+        });
+    }
+    
+    showNoSignal() {
+        const noSignal = document.getElementById('no-signal');
+        const video = document.getElementById('mars-video');
+        noSignal.classList.add('active');
+        video.style.opacity = '0';
+    }
+    
+    hideNoSignal() {
+        const noSignal = document.getElementById('no-signal');
+        const video = document.getElementById('mars-video');
+        noSignal.classList.remove('active');
+        video.style.opacity = '1';
     }
 
     toggleFlashlight() {
