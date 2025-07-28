@@ -95,9 +95,9 @@ class MarsExplorer {
             this.openModal();
         });
 
-        document.getElementById('toggle-led').addEventListener('click', () => {
-            this.toggleLed();
-        });
+        // document.getElementById('toggle-led').addEventListener('click', () => {
+        //     this.toggleLed();
+        // });
 
         // Control page
         document.getElementById('back-to-main').addEventListener('click', () => {
@@ -160,7 +160,7 @@ class MarsExplorer {
         await sleep(500);
         await this.addToConsole(`SOL ${this.gameState.sol} - All systems nominal`, 'system');
         await sleep(500);
-        await this.addToConsole('Ready for commands. Use command buttons for operations.', 'prompt');
+        await this.addToConsole('Ready for commands. Type HELP for commands list.', 'prompt');
         this.createNextPrompt(); // Show initial prompt
         this.commands['HELP'] = () => this.showHelp();
         this.generateCommandButtons();
@@ -580,6 +580,9 @@ All systems nominal`;
                 let connecting_line = await this.addToConsole(connecting, 'warning');
                 await this.typeText(connecting_line, connecting_and_dots, 150, connecting.length);
                 await this.typeText(connecting_line, connecting_and_dots + " DONE!", CONSOLE_OUTPUT_SPEED, connecting_and_dots.length);
+
+                await sleep(500);
+
                 this.playVideo("rushes/waiting.mp4", () => {
                     console.log("Video waiting finished, checking LED state", this.ledActive);
                     if (this.ledActive) {
@@ -602,6 +605,8 @@ All systems nominal`;
                 delete this.commands['SCAN'];  // No longer used
                 this.commands['LED'] = () => this.toggleLed();
                 this.generateCommandButtons();
+
+                this.switchPage('main');
             },
             'NO': () => {
                 this.commands = previousCommands; // Restore commands
